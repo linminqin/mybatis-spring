@@ -98,7 +98,7 @@ public class BaseDAOImpl implements BaseDAO {
 	public <T extends BasePojo> T find(Class<T> pojoClass, List<PropertyFilter> propertyFilters) throws DatabaseException {
 		try {
 			// 单个实例或者null；当返回的实例大于一个的时候的抛出NonUniqueResultException
-			return sqlSessionTemplate.selectOne("common.executeSql", generateQuery(pojoClass, propertyFilters, null));
+			return sqlSessionTemplate.selectOne("common.executeSelectSql", generateQuery(pojoClass, propertyFilters, null));
 		} catch (Exception e) {
 			throw new DatabaseException(e.getMessage());
 		}
@@ -180,38 +180,101 @@ public class BaseDAOImpl implements BaseDAO {
 
 	@Override
 	public <T extends BasePojo> void delete(List<T> pojos) throws DatabaseException {
-		// TODO Auto-generated method stub
 
 	}
 
 	@Override
 	public <T extends BasePojo> void delete(Class<T> pojoClass, Long id) throws DatabaseException {
-		// TODO Auto-generated method stub
-
+		SqlBuilder.BEGIN();
+		SqlBuilder.DELETE_FROM(getPojoTabelName(pojoClass));
+		SqlBuilder.WHERE(BasePojo.POJO_FIELD_NAME_ID + "=#{id}");
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("sql", SqlBuilder.SQL());
+		params.put("id", id);
+		sqlSessionTemplate.delete("common.executeDelete", params);
 	}
 
 	@Override
 	public <T extends BasePojo> void delete(Class<T> pojoClass, Long[] ids) throws DatabaseException {
-		// TODO Auto-generated method stub
-
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("tableName", getPojoTabelName(pojoClass));
+		params.put("ids", ids);
+		sqlSessionTemplate.delete("common.executeBatchDeleteByIds", params);
 	}
 
 	@Override
 	public <T extends BasePojo> int delete(Class<T> pojoClass, String propertyName, Object propertyValue) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return 0;
+		PropertyFilter propertyFilter = new PropertyFilter();
+		propertyFilter.setCompareClass(pojoClass);
+		propertyFilter.setCompareType(PropertyCompareType.EQ);
+		propertyFilter.setPropertyName(propertyName);
+		propertyFilter.setPropertyValue(propertyValue);
+		return delete(pojoClass, propertyFilter);
 	}
 
 	@Override
 	public <T extends BasePojo> int delete(Class<T> pojoClass, List<PropertyFilter> propertyFilters) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return 0;
+		SqlBuilder.BEGIN();
+		SqlBuilder.DELETE_FROM(getPojoTabelName(pojoClass));
+		StringBuffer whereCondition = new StringBuffer(" 1=1 ");
+		Map<String, Object> params = new HashMap<String, Object>();
+		for(PropertyFilter propertyFilter : propertyFilters) {
+			String propertyName = propertyFilter.getPropertyName();
+			String compareClassSimpleName = propertyFilter.getCompareClass().getSimpleName();
+			if (propertyFilter.isCollectionField()) {
+				propertyName = propertyName.substring(propertyName.indexOf(".") + 1);
+			}
+			whereCondition.append(" and ").append(generateCondition(propertyFilter));
+			params.put(compareClassSimpleName + "_" + propertyName, propertyFilter.getPropertyValue());
+		}
+		SqlBuilder.WHERE(whereCondition.toString());
+		params.put("sql", SqlBuilder.SQL());
+		return sqlSessionTemplate.delete("common.executeDelete", params);
+	}
+	
+	public String generateCondition(PropertyFilter filter) {
+		String propertyName = filter.getPropertyName();
+		String compareClassSimpleName = filter.getCompareClass().getSimpleName();
+		if (filter.isCollectionField()) {
+			propertyName = propertyName.substring(propertyName.indexOf(".") + 1);
+		}
+		StringBuffer sqlBuf = new StringBuffer();
+		sqlBuf.append(propertyName);
+		if (filter.getCompareType() == PropertyCompareType.EQ) {
+			sqlBuf.append(" = #{" + compareClassSimpleName + "_" + propertyName + "}");
+		} else if (filter.getCompareType() == PropertyCompareType.NE) {
+			sqlBuf.append(" != #{" + compareClassSimpleName + "_" + propertyName + "}");
+		} else if (filter.getCompareType() == PropertyCompareType.GT) {
+			sqlBuf.append(" > #{" + compareClassSimpleName + "_" + propertyName + "}");
+		} else if (filter.getCompareType() == PropertyCompareType.GE) {
+			sqlBuf.append(" >= #{" + compareClassSimpleName + "_" + propertyName + "}");
+		} else if (filter.getCompareType() == PropertyCompareType.LT) {
+			sqlBuf.append(" < #{" + compareClassSimpleName + "_" + propertyName + "}");
+		} else if (filter.getCompareType() == PropertyCompareType.LE) {
+			sqlBuf.append(" <= #{" + compareClassSimpleName + "_" + propertyName + "}");
+		} else if (filter.getCompareType() == PropertyCompareType.LIKE) {
+			sqlBuf.append(" like '%").append(filter.getPropertyValue()).append("%' ");
+		} else if (filter.getCompareType() == PropertyCompareType.LLIKE) {
+			sqlBuf.append(" like '%").append(filter.getPropertyValue()).append("' ");
+		} else if (filter.getCompareType() == PropertyCompareType.RLIKE) {
+			sqlBuf.append(" like '").append(filter.getPropertyValue()).append("%' ");
+		} else if (filter.getCompareType() == PropertyCompareType.NLIKE) {
+			sqlBuf.append(" not like '%").append(filter.getPropertyValue()).append("%' ");
+		} else if (filter.getCompareType() == PropertyCompareType.NLLIKE) {
+			sqlBuf.append(" not like '%").append(filter.getPropertyValue()).append("' ");
+		} else if (filter.getCompareType() == PropertyCompareType.NRLIKE) {
+			sqlBuf.append(" not like '").append(filter.getPropertyValue()).append("%' ");
+		} else if (filter.getCompareType() == PropertyCompareType.NNULL) {
+			sqlBuf.append(" is not null ");
+		} else if (filter.getCompareType() == PropertyCompareType.NULL) {
+			sqlBuf.append(" is null ");
+		}
+		return sqlBuf.toString();
 	}
 
 	@Override
 	public <T extends BasePojo> int delete(Class<T> pojoClass, PropertyFilter... propertyFilters) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return 0;
+		return delete(pojoClass, Arrays.asList(propertyFilters));
 	}
 
 	@Override

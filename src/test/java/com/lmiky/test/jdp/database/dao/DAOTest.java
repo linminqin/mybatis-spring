@@ -76,6 +76,11 @@ public class DAOTest extends BaseTest{
 		System.out.println(end - begin);
 	}
 
+	@Test
+	public void testDeleteByIds() {
+		baseDAO.delete(Goods.class, new Long[] {1009l, 1008l});
+	}
+	
 	/**
 	 * @param dao the dao to set
 	 */

@@ -5,7 +5,9 @@ import javax.annotation.Resource;
 import org.junit.Test;
 
 import com.lmiky.jdp.service.BaseService;
+import com.lmiky.jdp.service.exception.ServiceException;
 import com.lmiky.test.BaseTest;
+import com.lmiky.tiger.goods.pojo.Goods;
 
 /**
  * @author lmiky
@@ -17,6 +19,21 @@ public class ServiceTest extends BaseTest {
 	@Test
 	public void testGetSevice() {
 		System.out.println(baseService);
+	}
+	
+	@Test
+	public void testDeleteById() throws ServiceException {
+		baseService.delete(Goods.class, 1900l);
+	}
+	
+	@Test
+	public void testDeleteByIds() throws ServiceException {
+		baseService.delete(Goods.class, new Long[] {1919l, 1918L});
+	}
+	
+	@Test
+	public void testDelete() throws ServiceException {
+		baseService.delete(Goods.class, "id", 2419l);
 	}
 	
 	/**

@@ -10,7 +10,21 @@
     </resultMap>
 
     
-    <select id="executeSql" parameterType="Map" resultMap="resultGoods">
+    <select id="executeSelectSql" parameterType="Map" resultMap="resultGoods">
         ${sql}
     </select>
+    
+    <delete id="executeDelete" parameterType="string">
+    	${sql}
+    </delete>
+    
+    <delete id="executeBatchDeleteByIds" parameterType="Map">
+    	delete from ${tableName}
+    	<if test="ids != null and ids.length > 0">
+    		where id in
+	    	<foreach collection="ids" index="index" item="item" open="(" separator="," close=")"> 
+		       	#{item} 
+		    </foreach> 
+	    </if>
+    </delete>
 </mapper>

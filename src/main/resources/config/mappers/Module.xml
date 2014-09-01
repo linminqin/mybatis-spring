@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="common">
+<mapper namespace="com.lmiky.jdp.module.pojo.Module">
 	<resultMap type="Module" id="resultPojo">
         <id column="id" property="id" />
         <id column="name" property="name" />

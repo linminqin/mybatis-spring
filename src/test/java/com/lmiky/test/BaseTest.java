@@ -12,6 +12,6 @@ import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 		"classpath:config/applicationContext*.xml"})
 public class BaseTest extends AbstractJUnit4SpringContextTests {
 	{
-		//PropertyConfigurator.configure(BaseTest.class.getClassLoader().getResource("config/log4j.properties"));  
+//		PropertyConfigurator.configure(BaseTest.class.getClassLoader().getResource("config/log4j.properties"));  
 	}
 }
