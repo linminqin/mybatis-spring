@@ -27,10 +27,23 @@ import com.lmiky.jdp.database.pojo.BasePojo;
  */
 @Repository("baseDAO")
 public class BaseDAOImpl implements BaseDAO {
+	
+	//sql方法名
+		/**
+		 * sql方法名：查询
+		 */
+		protected static final String SQLNAME_FIND = "find";
+		
+		//查询方法名后缀
+		/**
+		 * 查询方法名后缀：查询
+		 */
+		private static final String SQLNAME_SUFFIX_FIND = "." + SQLNAME_FIND;
+
 	private SqlSessionTemplate sqlSessionTemplate;
-	
+
 	protected Map<Class<?>, String> pojoTableNames = new HashMap<Class<?>, String>();
-	
+
 	/**
 	 * 获取实体类的表名
 	 * @author lmiky
@@ -40,42 +53,44 @@ public class BaseDAOImpl implements BaseDAO {
 	 * @throws DatabaseException
 	 */
 	protected String getPojoTabelName(Class<?> pojoClass) throws DatabaseException {
-		//先读缓存
+		// 先读缓存
 		String cacheTableName = pojoTableNames.get(pojoClass);
-		if(cacheTableName != null) {
+		if (cacheTableName != null) {
 			return cacheTableName;
 		}
-		//根据反射获取
+		// 根据反射获取
 		Table annotation = pojoClass.getAnnotation(Table.class);
-		//没有对应的注解
-		if(annotation == null) {
+		// 没有对应的注解
+		if (annotation == null) {
 			throw new DatabaseException(pojoClass.getName() + " is not a db pojo!");
 		}
 		cacheTableName = annotation.name();
-		//放入缓存
+		// 放入缓存
 		pojoTableNames.put(pojoClass, cacheTableName);
 		return cacheTableName;
 	}
 
 	@Override
 	public <T extends BasePojo> T find(Class<T> pojoClass, Long id) throws DatabaseException {
-//		SqlBuilder.BEGIN();
-//		SqlBuilder.SELECT("*");
-//		SqlBuilder.FROM(getPojoTabelName(pojoClass));
-//		SqlBuilder.WHERE(BasePojo.POJO_FIELD_NAME_ID + " = #{" + BasePojo.POJO_FIELD_NAME_ID + "}");
-//		Map<String, Object> values = new HashMap<String, Object>();
-//		values.put("sql", SqlBuilder.SQL());
-//		values.put("id", id);
-//		return sqlSessionTemplate.selectOne("common.executeSql", values);
-		PropertyFilter propertyFilter = new PropertyFilter();
-		propertyFilter.setCompareClass(pojoClass);
-		propertyFilter.setCompareType(PropertyCompareType.EQ);
-		propertyFilter.setPropertyName(BasePojo.POJO_FIELD_NAME_ID + "");
-		propertyFilter.setPropertyValue(id);
-		return find(pojoClass, propertyFilter);
+		// SqlBuilder.BEGIN();
+		// SqlBuilder.SELECT("*");
+		// SqlBuilder.FROM(getPojoTabelName(pojoClass));
+		// SqlBuilder.WHERE(BasePojo.POJO_FIELD_NAME_ID + " = #{" + BasePojo.POJO_FIELD_NAME_ID + "}");
+		// Map<String, Object> values = new HashMap<String, Object>();
+		// values.put("sql", SqlBuilder.SQL());
+		// values.put("id", id);
+		// return sqlSessionTemplate.selectOne("common.executeSql", values);
+//		PropertyFilter propertyFilter = new PropertyFilter();
+//		propertyFilter.setCompareClass(pojoClass);
+//		propertyFilter.setCompareType(PropertyCompareType.EQ);
+//		propertyFilter.setPropertyName(BasePojo.POJO_FIELD_NAME_ID + "");
+//		propertyFilter.setPropertyValue(id);
+//		return find(pojoClass, propertyFilter);
+		return sqlSessionTemplate.selectOne(pojoClass.getName() + SQLNAME_SUFFIX_FIND, id);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see com.lmiky.jdp.database.dao.BaseDAO#find(java.lang.Class, java.lang.String, java.lang.Object)
 	 */
 	public <T extends BasePojo> T find(Class<T> pojoClass, String propertyName, Object propertyValue) throws DatabaseException {
@@ -90,7 +105,7 @@ public class BaseDAOImpl implements BaseDAO {
 			throw new DatabaseException(e.getMessage());
 		}
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see com.lmiky.jdp.database.dao.BaseDAO#find(java.lang.Class, java.util.List)
@@ -218,7 +233,7 @@ public class BaseDAOImpl implements BaseDAO {
 		SqlBuilder.DELETE_FROM(getPojoTabelName(pojoClass));
 		StringBuffer whereCondition = new StringBuffer(" 1=1 ");
 		Map<String, Object> params = new HashMap<String, Object>();
-		for(PropertyFilter propertyFilter : propertyFilters) {
+		for (PropertyFilter propertyFilter : propertyFilters) {
 			String propertyName = propertyFilter.getPropertyName();
 			String compareClassSimpleName = propertyFilter.getCompareClass().getSimpleName();
 			if (propertyFilter.isCollectionField()) {
@@ -231,7 +246,7 @@ public class BaseDAOImpl implements BaseDAO {
 		params.put("sql", SqlBuilder.SQL());
 		return sqlSessionTemplate.delete("common.executeDelete", params);
 	}
-	
+
 	public String generateCondition(PropertyFilter filter) {
 		String propertyName = filter.getPropertyName();
 		String compareClassSimpleName = filter.getCompareClass().getSimpleName();
@@ -372,7 +387,7 @@ public class BaseDAOImpl implements BaseDAO {
 		// TODO Auto-generated method stub
 		return false;
 	}
-	
+
 	/**
 	 * 生成查询对象
 	 * @author lmiky
@@ -389,8 +404,7 @@ public class BaseDAOImpl implements BaseDAO {
 		query.put("sql", sql);
 		return query;
 	}
-	
-	
+
 	/**
 	 * 生成HQL
 	 * @author lmiky
@@ -404,7 +418,7 @@ public class BaseDAOImpl implements BaseDAO {
 		String pojoSimpleName = pojoClass.getSimpleName();
 		SqlBuilder.BEGIN();
 		SqlBuilder.SELECT("distinct " + pojoSimpleName + ".*");
-		SqlBuilder.FROM(getPojoTabelName(pojoClass) +  " " + pojoSimpleName);
+		SqlBuilder.FROM(getPojoTabelName(pojoClass) + " " + pojoSimpleName);
 		if (propertyFilters != null && !propertyFilters.isEmpty()) {
 			List<String> joinClassNames = new ArrayList<String>();
 			for (PropertyFilter propertyFilter : propertyFilters) {
@@ -415,7 +429,8 @@ public class BaseDAOImpl implements BaseDAO {
 						continue;
 					}
 					String comparePropertyName = propertyFilter.getPropertyName().substring(0, propertyFilter.getPropertyName().indexOf("."));
-					SqlBuilder.INNER_JOIN(getPojoTabelName(propertyFilter.getCompareClass()) + " " + compareClassSimpleName + " on " + pojoSimpleName + "." + comparePropertyName + "=" + compareClassSimpleName + "." + BasePojo.POJO_FIELD_NAME_ID);
+					SqlBuilder.INNER_JOIN(getPojoTabelName(propertyFilter.getCompareClass()) + " " + compareClassSimpleName + " on " + pojoSimpleName + "." + comparePropertyName + "="
+							+ compareClassSimpleName + "." + BasePojo.POJO_FIELD_NAME_ID);
 					SqlBuilder.WHERE(compareClassSimpleName + "." + comparePropertyName + "=#{" + compareClassSimpleName + "_" + comparePropertyName + "}");
 					joinClassNames.add(compareClassSimpleName);
 				}
@@ -423,7 +438,7 @@ public class BaseDAOImpl implements BaseDAO {
 		}
 		return prepareHql(propertyFilters, sorts);
 	}
-	
+
 	/**
 	 * 设置HQL
 	 * @author lmiky
@@ -503,7 +518,7 @@ public class BaseDAOImpl implements BaseDAO {
 						&& filter.getCompareType() != PropertyCompareType.NRLIKE && filter.getCompareType() != PropertyCompareType.NNULL && filter.getCompareType() != PropertyCompareType.NULL) {
 					String compareClassSimpleName = filter.getCompareClass().getSimpleName();
 					String comparePropertyName = filter.getPropertyName();
-					if(filter.isCollectionField()) {
+					if (filter.isCollectionField()) {
 						comparePropertyName = filter.getPropertyName().substring(0, filter.getPropertyName().indexOf("."));
 					}
 					values.put(compareClassSimpleName + "_" + comparePropertyName, filter.getPropertyValue());
@@ -512,7 +527,7 @@ public class BaseDAOImpl implements BaseDAO {
 		}
 		return values;
 	}
-	
+
 	/**
 	 * @return the sqlSessionTemplate
 	 */
@@ -523,7 +538,7 @@ public class BaseDAOImpl implements BaseDAO {
 	/**
 	 * @param sqlSessionTemplate the sqlSessionTemplate to set
 	 */
-	@Resource(name="sqlSessionTemplate")
+	@Resource(name = "sqlSessionTemplate")
 	public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
 		this.sqlSessionTemplate = sqlSessionTemplate;
 	}

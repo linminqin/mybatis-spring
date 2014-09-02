@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.lmiky.jdp.module.pojo.Module">
+	<resultMap type="Module" id="module">
+		<id column="id" property="id"/>
+		<id column="name" property="name"/>
+		<id column="path" property="path"/>
+		
+		<association property="group" column="group_id" select="com.lmiky.jdp.module.pojo.ModuleGroup.findById"/>
+		 <!-- 
+		 <association property="group" column="group_id" resultMap="com.lmiky.jdp.module.pojo.ModuleGroup.moduleGroup"/>
+		 -->
+	</resultMap>
+	<sql id="tableName">
+		t_module
+	</sql>
+	<select id="findById" resultMap="module">
+		select * from 
+		<include refid="tableName"/>	
+		where id = #{id}
+	</select>
+	
+	<select id="findByGroupId" resultMap="module">
+		select * from 
+		<include refid="tableName"/>	
+		where group_id = #{groupId}
+	</select>
+	
+	<select id="find" resultMap="module">
+		select * from 
+		<include refid="tableName"/>	
+		where id = #{id}
+	</select>
+	
+	 <!-- 
+	 <select id="find" resultMap="module">
+		select m.*, g.id modulegroup_id, g.name modulegroup_name, g.path modulegroup_path from 
+		<include refid="tableName"/> m  join <include refid="com.lmiky.jdp.module.pojo.ModuleGroup.tableName"/> g on m.group_id = g.id
+		where m.id = #{id}
+	</select>
+	 -->
+</mapper>

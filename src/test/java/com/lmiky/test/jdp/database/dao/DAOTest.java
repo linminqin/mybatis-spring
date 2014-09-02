@@ -2,6 +2,7 @@ package com.lmiky.test.jdp.database.dao;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.annotation.Resource;
 
@@ -11,6 +12,7 @@ import com.lmiky.jdp.database.dao.BaseDAO;
 import com.lmiky.jdp.database.model.PropertyCompareType;
 import com.lmiky.jdp.database.model.PropertyFilter;
 import com.lmiky.jdp.module.pojo.Module;
+import com.lmiky.jdp.module.pojo.ModuleGroup;
 import com.lmiky.test.BaseTest;
 import com.lmiky.tiger.goods.pojo.Goods;
 
@@ -79,6 +81,28 @@ public class DAOTest extends BaseTest{
 	@Test
 	public void testDeleteByIds() {
 		baseDAO.delete(Goods.class, new Long[] {1009l, 1008l});
+	}
+	
+	@Test
+	public void testFind() {
+		long begin = System.currentTimeMillis();
+		Module module = baseDAO.find(Module.class, 290l);
+		System.out.println(module);
+		if(module != null) {
+			System.out.println(module.getName());
+			ModuleGroup group = module.getGroup();
+			System.out.println(group);
+//			if(module.getGroup() != null) {
+//				System.out.println(group.getName());
+//				Set<Module> modules = module.getGroup().getModules();
+//				if(modules != null) {
+//					System.out.println(modules.size());
+//					System.out.println(modules.iterator().next().getName());
+//				}
+//			}
+		}
+		long end = System.currentTimeMillis();
+		System.out.println(end - begin);
 	}
 	
 	/**
