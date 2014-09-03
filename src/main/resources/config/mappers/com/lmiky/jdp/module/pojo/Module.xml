@@ -7,8 +7,9 @@
 		<id column="id" property="id"/>
 		<id column="name" property="name"/>
 		<id column="path" property="path"/>
-		
+		<!-- 
 		<association property="group" column="group_id" select="com.lmiky.jdp.module.pojo.ModuleGroup.findById"/>
+		 -->
 		 <!-- 
 		 <association property="group" column="group_id" resultMap="com.lmiky.jdp.module.pojo.ModuleGroup.moduleGroup"/>
 		 -->
@@ -30,8 +31,58 @@
 	
 	<select id="find" resultMap="module">
 		select * from 
-		<include refid="tableName"/>	
-		where id = #{id}
+		<include refid="tableName"/>
+		<where>
+			<foreach collection="filters" item="filter" separator="and">
+				<choose>
+					<when test="filter.compareType.value == 'eq'">
+						${filter.propertyName} = #{filter.propertyValue}
+					</when>
+					<when test="filter.compareType.value == 'ne'">
+						${filter.propertyName} != #{filter.propertyValue}
+					</when>
+					<when test="filter.compareType.value == 'gt'">
+						${filter.propertyName} > #{filter.propertyValue}
+					</when>
+					<when test="filter.compareType.value == 'ge'">
+						${filter.propertyName} >= #{filter.propertyValue}
+					</when>
+					<when test="filter.compareType.value == 'lt'">
+						<![CDATA[ ${filter.propertyName} < #{filter.propertyValue} ]]>
+					</when>
+					<when test="filter.compareType.value == 'le'">
+						<![CDATA[ ${filter.propertyName} <= #{filter.propertyValue} ]]>
+					</when>
+					<when test="filter.compareType.value == 'like'">
+						${filter.propertyName} like '%#{filter.propertyValue}%'
+					</when>
+					<when test="filter.compareType.value == 'llike'">
+						${filter.propertyName} like '%#{filter.propertyValue}'
+					</when>
+					<when test="filter.compareType.value == 'rlike'">
+						${filter.propertyName} like '#{filter.propertyValue}%'
+					</when>
+					<when test="filter.compareType.value == 'nlike'">
+						${filter.propertyName} not like '%#{filter.propertyValue}%'
+					</when>
+					<when test="filter.compareType.value == 'nllike'">
+						${filter.propertyName} not like '%#{filter.propertyValue}'
+					</when>
+					<when test="filter.compareType.value == 'nrlike'">
+						${filter.propertyName} not like '#{filter.propertyValue}%'
+					</when>
+					<when test="filter.compareType.value == 'nnull'">
+						${filter.propertyName} is not null
+					</when>
+					<when test="filter.compareType.value == 'null'">
+						${filter.propertyName} is null
+					</when>
+					<otherwise>
+						${filter.propertyName} = #{filter.propertyValue}
+					</otherwise>
+				</choose>
+			</foreach>
+		</where>
 	</select>
 	
 	 <!-- 

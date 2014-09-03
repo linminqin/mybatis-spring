@@ -70,6 +70,9 @@ public class BaseDAOImpl implements BaseDAO {
 		return cacheTableName;
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#find(java.lang.Class, java.lang.Long)
+	 */
 	@Override
 	public <T extends BasePojo> T find(Class<T> pojoClass, Long id) throws DatabaseException {
 		// SqlBuilder.BEGIN();
@@ -80,13 +83,13 @@ public class BaseDAOImpl implements BaseDAO {
 		// values.put("sql", SqlBuilder.SQL());
 		// values.put("id", id);
 		// return sqlSessionTemplate.selectOne("common.executeSql", values);
-//		PropertyFilter propertyFilter = new PropertyFilter();
-//		propertyFilter.setCompareClass(pojoClass);
-//		propertyFilter.setCompareType(PropertyCompareType.EQ);
-//		propertyFilter.setPropertyName(BasePojo.POJO_FIELD_NAME_ID + "");
-//		propertyFilter.setPropertyValue(id);
-//		return find(pojoClass, propertyFilter);
-		return sqlSessionTemplate.selectOne(pojoClass.getName() + SQLNAME_SUFFIX_FIND, id);
+		PropertyFilter propertyFilter = new PropertyFilter();
+		propertyFilter.setCompareClass(pojoClass);
+		propertyFilter.setCompareType(PropertyCompareType.EQ);
+		propertyFilter.setPropertyName(BasePojo.POJO_FIELD_NAME_ID + "");
+		propertyFilter.setPropertyValue(id);
+		return find(pojoClass, propertyFilter);
+//		return sqlSessionTemplate.selectOne(pojoClass.getName() + SQLNAME_SUFFIX_FIND, id);
 	}
 
 	/*
