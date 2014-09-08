@@ -33,55 +33,7 @@
 		select * from 
 		<include refid="tableName"/>
 		<where>
-			<foreach collection="filters" item="filter" separator="and">
-				<choose>
-					<when test="filter.compareType.value == 'eq'">
-						${filter.propertyName} = #{filter.propertyValue}
-					</when>
-					<when test="filter.compareType.value == 'ne'">
-						${filter.propertyName} != #{filter.propertyValue}
-					</when>
-					<when test="filter.compareType.value == 'gt'">
-						${filter.propertyName} > #{filter.propertyValue}
-					</when>
-					<when test="filter.compareType.value == 'ge'">
-						${filter.propertyName} >= #{filter.propertyValue}
-					</when>
-					<when test="filter.compareType.value == 'lt'">
-						<![CDATA[ ${filter.propertyName} < #{filter.propertyValue} ]]>
-					</when>
-					<when test="filter.compareType.value == 'le'">
-						<![CDATA[ ${filter.propertyName} <= #{filter.propertyValue} ]]>
-					</when>
-					<when test="filter.compareType.value == 'like'">
-						${filter.propertyName} like '%#{filter.propertyValue}%'
-					</when>
-					<when test="filter.compareType.value == 'llike'">
-						${filter.propertyName} like '%#{filter.propertyValue}'
-					</when>
-					<when test="filter.compareType.value == 'rlike'">
-						${filter.propertyName} like '#{filter.propertyValue}%'
-					</when>
-					<when test="filter.compareType.value == 'nlike'">
-						${filter.propertyName} not like '%#{filter.propertyValue}%'
-					</when>
-					<when test="filter.compareType.value == 'nllike'">
-						${filter.propertyName} not like '%#{filter.propertyValue}'
-					</when>
-					<when test="filter.compareType.value == 'nrlike'">
-						${filter.propertyName} not like '#{filter.propertyValue}%'
-					</when>
-					<when test="filter.compareType.value == 'nnull'">
-						${filter.propertyName} is not null
-					</when>
-					<when test="filter.compareType.value == 'null'">
-						${filter.propertyName} is null
-					</when>
-					<otherwise>
-						${filter.propertyName} = #{filter.propertyValue}
-					</otherwise>
-				</choose>
-			</foreach>
+			<include refid="common.propertiesCondition"/>
 		</where>
 	</select>
 	
@@ -92,4 +44,8 @@
 		where m.id = #{id}
 	</select>
 	 -->
+	 
+	 <insert id="add" parameterType="Module" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+	 	insert into <include refid="tableName"/>(name, path) values(#{name}, #{path})
+	 </insert>
 </mapper>

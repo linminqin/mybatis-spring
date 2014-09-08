@@ -2,23 +2,24 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
+<!-- 公共 -->
 <mapper namespace="common">
-	<resultMap type="Goods" id="resultGoods">
-        <id column="id" property="id" />
-        <id column="title" property="title" />
-        <result column="salePrice" property="salePrice" />
-    </resultMap>
 
+    <!-- 删除 -->
+    <update id="executeUpdate" parameterType="string">
+   		${sql}
+    </update>
     
-    <select id="executeSelectSql" parameterType="Map" resultMap="resultGoods">
-        ${sql}
-    </select>
-    
+    <!-- 删除 -->
     <delete id="executeDelete" parameterType="string">
-    	${sql}
+    	delete from ${tableName} 
+    	<where>
+    		<include refid="common.propertiesCondition"/>
+    	</where>
     </delete>
     
-    <delete id="executeBatchDeleteByIds" parameterType="Map">
+    <!-- 根据ID批量删除 -->
+    <delete id="executeBatchDeleteByIds">
     	delete from ${tableName}
     	<if test="ids != null and ids.length > 0">
     		where id in
@@ -27,4 +28,58 @@
 		    </foreach> 
 	    </if>
     </delete>
+    
+    <!-- 过滤条件 -->
+    <sql id="propertiesCondition">
+        <foreach collection="filters" item="filter" separator="and">
+				<choose>
+					<when test="filter.compareType.value == 'eq'">
+						${filter.propertyName} = #{filter.propertyValue}
+					</when>
+					<when test="filter.compareType.value == 'ne'">
+						${filter.propertyName} != #{filter.propertyValue}
+					</when>
+					<when test="filter.compareType.value == 'gt'">
+						${filter.propertyName} > #{filter.propertyValue}
+					</when>
+					<when test="filter.compareType.value == 'ge'">
+						${filter.propertyName} >= #{filter.propertyValue}
+					</when>
+					<when test="filter.compareType.value == 'lt'">
+						<![CDATA[ ${filter.propertyName} < #{filter.propertyValue} ]]>
+					</when>
+					<when test="filter.compareType.value == 'le'">
+						<![CDATA[ ${filter.propertyName} <= #{filter.propertyValue} ]]>
+					</when>
+					<when test="filter.compareType.value == 'like'">
+						${filter.propertyName} like '%${filter.propertyValue}%'
+					</when>
+					<when test="filter.compareType.value == 'llike'">
+						${filter.propertyName} like '${filter.propertyValue}%'
+					</when>
+					<when test="filter.compareType.value == 'rlike'">
+						${filter.propertyName} like '%${filter.propertyValue}'
+					</when>
+					<when test="filter.compareType.value == 'nlike'">
+						${filter.propertyName} not like '${filter.propertyValue}%'
+					</when>
+					<when test="filter.compareType.value == 'nllike'">
+						${filter.propertyName} not like '${filter.propertyValue}%'
+					</when>
+					<when test="filter.compareType.value == 'nrlike'">
+						${filter.propertyName} not like '%${filter.propertyValue}'
+					</when>
+					<when test="filter.compareType.value == 'nnull'">
+						${filter.propertyName} is not null
+					</when>
+					<when test="filter.compareType.value == 'null'">
+						${filter.propertyName} is null
+					</when>
+					<otherwise>
+						${filter.propertyName} = #{filter.propertyValue}
+					</otherwise>
+				</choose>
+			</foreach>
+    </sql>
+    
 </mapper>

@@ -2,7 +2,6 @@ package com.lmiky.test.jdp.database.dao;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import javax.annotation.Resource;
 
@@ -32,10 +31,10 @@ public class DAOTest extends BaseTest{
 	@Test
 	public void testFindById() {
 		long begin = System.currentTimeMillis();
-		Goods goods = baseDAO.find(Goods.class, 508l);
-		System.out.println(goods);
-		if(goods != null) {
-			System.out.println(goods.getTitle());
+		Module module = baseDAO.find(Module.class, 290l);
+		System.out.println(module);
+		if(module != null) {
+			System.out.println(module.getName());
 		}
 		long end = System.currentTimeMillis();
 		System.out.println(end - begin);
@@ -58,31 +57,26 @@ public class DAOTest extends BaseTest{
 		long begin = System.currentTimeMillis();
 		List<PropertyFilter> propertyFilters = new ArrayList<PropertyFilter>();
 		PropertyFilter propertyFilter = new PropertyFilter();
-		propertyFilter.setCompareClass(Goods.class);
-		propertyFilter.setCompareType(PropertyCompareType.EQ);
-		propertyFilter.setPropertyName("title");
-		propertyFilter.setPropertyValue("1222");
+		propertyFilter.setCompareClass(Module.class);
+		propertyFilter.setCompareType(PropertyCompareType.LLIKE);
+		propertyFilter.setPropertyName("path");
+		propertyFilter.setPropertyValue("jdp");
 		propertyFilters.add(propertyFilter);
 		PropertyFilter propertyFilter2 = new PropertyFilter();
-		propertyFilter2.setCompareClass(Goods.class);
-		propertyFilter2.setCompareType(PropertyCompareType.EQ);
-		propertyFilter2.setPropertyName("id");
-		propertyFilter2.setPropertyValue("2l");
+		propertyFilter2.setCompareClass(Module.class);
+		propertyFilter2.setCompareType(PropertyCompareType.LIKE);
+		propertyFilter2.setPropertyName("name");
+		propertyFilter2.setPropertyValue("地区");
 		propertyFilters.add(propertyFilter2);
-		Goods goods = baseDAO.find(Goods.class, propertyFilters);
-		System.out.println(goods);
-		if(goods != null) {
-			System.out.println(goods.getTitle());
+		Module module = baseDAO.find(Module.class, propertyFilters);
+		System.out.println(module);
+		if(module != null) {
+			System.out.println(module.getId());
 		}
 		long end = System.currentTimeMillis();
 		System.out.println(end - begin);
 	}
 
-	@Test
-	public void testDeleteByIds() {
-		baseDAO.delete(Goods.class, new Long[] {1009l, 1008l});
-	}
-	
 	@Test
 	public void testFind() {
 		long begin = System.currentTimeMillis();
@@ -103,6 +97,51 @@ public class DAOTest extends BaseTest{
 		}
 		long end = System.currentTimeMillis();
 		System.out.println(end - begin);
+	}
+	
+	@Test
+	public void testDeleteByPojo() {
+		Module module = baseDAO.find(Module.class, 299l);
+		baseDAO.delete(module);
+	}
+	
+	@Test
+	public void testDeleteById() {
+		baseDAO.delete(Goods.class, 2417l);
+	}
+	
+	@Test
+	public void testDeleteByIds() {
+		baseDAO.delete(Goods.class, new Long[] {1009l, 1008l});
+	}
+	
+	@Test
+	public void testDelete() {
+		List<PropertyFilter> propertyFilters = new ArrayList<PropertyFilter>();
+		PropertyFilter propertyFilter = new PropertyFilter();
+		propertyFilter.setCompareClass(Goods.class);
+		propertyFilter.setCompareType(PropertyCompareType.LLIKE);
+		propertyFilter.setPropertyName("title");
+		propertyFilter.setPropertyValue("测试添加1");
+		propertyFilters.add(propertyFilter);
+		PropertyFilter propertyFilter2 = new PropertyFilter();
+		propertyFilter2.setCompareClass(Goods.class);
+		propertyFilter2.setCompareType(PropertyCompareType.GT);
+		propertyFilter2.setPropertyName("id");
+		propertyFilter2.setPropertyValue(2400l);
+		propertyFilters.add(propertyFilter2);
+		baseDAO.delete(Goods.class, propertyFilters);
+	}
+	
+	@Test
+	public void testAdd() {
+		Module module = new Module();
+		module.setName("test");
+		module.setPath("test");
+		ModuleGroup group = new ModuleGroup();
+		group.setId(132l);
+		module.setGroup(group);
+		baseDAO.add(module);
 	}
 	
 	/**
