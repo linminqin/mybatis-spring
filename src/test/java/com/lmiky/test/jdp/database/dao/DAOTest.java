@@ -1,7 +1,9 @@
 package com.lmiky.test.jdp.database.dao;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Resource;
 
@@ -10,6 +12,7 @@ import org.junit.Test;
 import com.lmiky.jdp.database.dao.BaseDAO;
 import com.lmiky.jdp.database.model.PropertyCompareType;
 import com.lmiky.jdp.database.model.PropertyFilter;
+import com.lmiky.jdp.database.model.Sort;
 import com.lmiky.jdp.module.pojo.Module;
 import com.lmiky.jdp.module.pojo.ModuleGroup;
 import com.lmiky.test.BaseTest;
@@ -142,6 +145,148 @@ public class DAOTest extends BaseTest{
 		group.setId(132l);
 		module.setGroup(group);
 		baseDAO.add(module);
+		System.out.println(module.getId());
+	}
+	
+	@Test
+	public void testUpdate() {
+		System.out.println(baseDAO.update(Goods.class, 1920l, "title", "test"));
+	}
+	
+	@Test
+	public void testUpdate2() {
+		Map<String, Object> condition = new HashMap<String, Object>();
+		condition.put("title", "测试添加");
+		condition.put("sale_price", 12.21);
+		Map<String, Object> value = new HashMap<String, Object>();
+		value.put("title", "测试添加1221");
+		value.put("market_price", 12.21);
+		System.out.println(baseDAO.update(Goods.class, condition, value));
+	}
+	
+	@Test
+	public void testUpdate3() {
+		Module module = baseDAO.find(Module.class, 303l);
+		module.setName("test3");
+		module.setPath("test3");
+		ModuleGroup group = new ModuleGroup();
+		group.setId(131l);
+		module.setGroup(group);
+		baseDAO.update(module);
+	}
+	
+	@Test
+	public void testList() {
+		List<Module> modules = baseDAO.list(Module.class);
+		System.out.println(modules.size());
+	}
+	
+	@Test
+	public void testList1() {
+		List<Module> modules = baseDAO.list(Module.class, 1, 5);
+		System.out.println(modules.size());
+	}
+	
+	@Test
+	public void testList2() {
+		PropertyFilter propertyFilter = new PropertyFilter();
+		propertyFilter.setCompareClass(Goods.class);
+		propertyFilter.setCompareType(PropertyCompareType.LLIKE);
+		propertyFilter.setPropertyName("path");
+		propertyFilter.setPropertyValue("jdp");
+		Sort sort = new Sort();
+		sort.setPropertyName("id");
+		sort.setSortType(Sort.SORT_TYPE_DESC);
+		List<Module> modules = baseDAO.list(Module.class, propertyFilter, sort);
+		System.out.println(modules.size());
+		System.out.println(modules.get(0).getId());
+	}
+	
+	@Test
+	public void testList3() {
+		List<PropertyFilter> propertyFilters = new ArrayList<PropertyFilter>();
+		PropertyFilter propertyFilter = new PropertyFilter();
+		propertyFilter.setCompareClass(Goods.class);
+		propertyFilter.setCompareType(PropertyCompareType.LLIKE);
+		propertyFilter.setPropertyName("path");
+		propertyFilter.setPropertyValue("jdp");
+		propertyFilters.add(propertyFilter);
+		PropertyFilter propertyFilter2 = new PropertyFilter();
+		propertyFilter2.setCompareClass(Goods.class);
+		propertyFilter2.setCompareType(PropertyCompareType.GT);
+		propertyFilter2.setPropertyName("id");
+		propertyFilter2.setPropertyValue(291l);
+		propertyFilters.add(propertyFilter2);
+		PropertyFilter propertyFilter3 = new PropertyFilter();
+		propertyFilter3.setCompareClass(Goods.class);
+		propertyFilter3.setCompareType(PropertyCompareType.LT);
+		propertyFilter3.setPropertyName("id");
+		propertyFilter3.setPropertyValue(294l);
+		propertyFilters.add(propertyFilter3);
+		List<Module> modules = baseDAO.list(Module.class, propertyFilters.toArray(new PropertyFilter[propertyFilters.size()]));
+		System.out.println(modules.size());
+		System.out.println(modules.get(0).getId());
+	}
+	
+	@Test
+	public void testList4() {
+		List<PropertyFilter> propertyFilters = new ArrayList<PropertyFilter>();
+		PropertyFilter propertyFilter = new PropertyFilter();
+		propertyFilter.setCompareClass(Goods.class);
+		propertyFilter.setCompareType(PropertyCompareType.LLIKE);
+		propertyFilter.setPropertyName("path");
+		propertyFilter.setPropertyValue("jdp");
+		propertyFilters.add(propertyFilter);
+		PropertyFilter propertyFilter2 = new PropertyFilter();
+		propertyFilter2.setCompareClass(Goods.class);
+		propertyFilter2.setCompareType(PropertyCompareType.GT);
+		propertyFilter2.setPropertyName("id");
+		propertyFilter2.setPropertyValue(291l);
+		propertyFilters.add(propertyFilter2);
+		PropertyFilter propertyFilter3 = new PropertyFilter();
+		propertyFilter3.setCompareClass(Goods.class);
+		propertyFilter3.setCompareType(PropertyCompareType.LT);
+		propertyFilter3.setPropertyName("id");
+		propertyFilter3.setPropertyValue(294l);
+		propertyFilters.add(propertyFilter3);
+		
+		List<Sort> sorts = new ArrayList<Sort>();
+		Sort sort = new Sort();
+		sort.setPropertyName("id");
+		sort.setSortType(Sort.SORT_TYPE_DESC);
+		sorts.add(sort);
+		List<Module> modules = baseDAO.list(Module.class, propertyFilters, sorts, 0, 1);
+		System.out.println(modules.size());
+		System.out.println(modules.get(0).getId());
+	}
+	
+	@Test
+	public void testCount() {
+		List<PropertyFilter> propertyFilters = new ArrayList<PropertyFilter>();
+		PropertyFilter propertyFilter = new PropertyFilter();
+		propertyFilter.setCompareClass(Goods.class);
+		propertyFilter.setCompareType(PropertyCompareType.LLIKE);
+		propertyFilter.setPropertyName("path");
+		propertyFilter.setPropertyValue("jdp");
+		propertyFilters.add(propertyFilter);
+		PropertyFilter propertyFilter2 = new PropertyFilter();
+		propertyFilter2.setCompareClass(Goods.class);
+		propertyFilter2.setCompareType(PropertyCompareType.GT);
+		propertyFilter2.setPropertyName("id");
+		propertyFilter2.setPropertyValue(291l);
+		propertyFilters.add(propertyFilter2);
+		PropertyFilter propertyFilter3 = new PropertyFilter();
+		propertyFilter3.setCompareClass(Goods.class);
+		propertyFilter3.setCompareType(PropertyCompareType.LT);
+		propertyFilter3.setPropertyName("id");
+		propertyFilter3.setPropertyValue(294l);
+		propertyFilters.add(propertyFilter3);
+		System.out.println(baseDAO.count(Module.class, propertyFilters));
+	}
+	
+	@Test
+	public void testCount1() {
+		System.out.println(baseDAO.count(Module.class));
 	}
 	
 	/**

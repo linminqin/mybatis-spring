@@ -9,7 +9,6 @@ import java.util.Map;
 import javax.annotation.Resource;
 import javax.persistence.Table;
 
-import org.apache.ibatis.jdbc.SqlBuilder;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -28,7 +27,31 @@ import com.lmiky.jdp.database.pojo.BasePojo;
 @Repository("baseDAO")
 public class BaseDAOImpl implements BaseDAO {
 	
-		//sql方法名
+	//参数字段
+	/**
+	 * 过滤条件
+	 */
+	protected static final String PARAM_NAME_FILTERS = "filters";
+	/**
+	 * 排序
+	 */
+	protected static final String PARAM_NAME_SORTS = "sorts";
+	/**
+	 * 分页：起始位置
+	 */
+	protected static final String PARAM_NAME_PAGE_FIRST = "pageFirst";
+	/**
+	 * 分页：查询记录数
+	 */
+	protected static final String PARAM_NAME_PAGE_SIZE = "pageSize";
+	
+	//映射文件命名空间
+	/**
+	 * 公共映射
+	 */
+	protected static final String MAPPER_NAMESPACE_COMMON = "common";
+	
+	//sql方法名
 	/**
 	 * sql方法名：查询
 	 */
@@ -39,6 +62,21 @@ public class BaseDAOImpl implements BaseDAO {
 	 */
 	protected static final String SQLNAME_ADD = "add";
 	
+	/**
+	 * sql方法名：修改
+	 */
+	protected static final String SQLNAME_UPDATE = "update";
+	
+	/**
+	 * sql方法名：获取列表
+	 */
+	protected static final String SQLNAME_LIST = "list";
+	
+	/**
+	 * sql方法名：统计
+	 */
+	protected static final String SQLNAME_COUNT = "count";
+	
 	//查询方法名后缀
 	/**
 	 * 查询方法名后缀：查询
@@ -48,9 +86,24 @@ public class BaseDAOImpl implements BaseDAO {
 	 * 查询方法名后缀：添加
 	 */
 	protected static final String SQLNAME_SUFFIX_ADD = "." + SQLNAME_ADD;
+	/**
+	 * 查询方法名后缀：添加
+	 */
+	protected static final String SQLNAME_SUFFIX_UPDATE = "." + SQLNAME_UPDATE;
+	/**
+	 * 查询方法名后缀：获取列表
+	 */
+	protected static final String SQLNAME_SUFFIX_LIST = "." + SQLNAME_LIST;
+	/**
+	 * 查询方法名后缀：统计
+	 */
+	protected static final String SQLNAME_SUFFIX_COUNT = "." + SQLNAME_COUNT;
 
 	private SqlSessionTemplate sqlSessionTemplate;
-
+	
+	/**
+	 * 对象对应的数据库表名
+	 */
 	protected Map<Class<?>, String> pojoTableNames = new HashMap<Class<?>, String>();
 
 	/**
@@ -79,6 +132,13 @@ public class BaseDAOImpl implements BaseDAO {
 		return cacheTableName;
 	}
 	
+	/**
+	 * 生成参数
+	 * @author lmiky
+	 * @date 2014年9月9日 上午10:23:01
+	 * @param pojoClass
+	 * @return
+	 */
 	protected <T extends BasePojo> Map<String, Object> generateParameterMap(Class<T> pojoClass) {
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("tableName", getPojoTabelName(pojoClass));
@@ -134,7 +194,7 @@ public class BaseDAOImpl implements BaseDAO {
 			// 单个实例或者null；当返回的实例大于一个的时候的抛出NonUniqueResultException
 			//return sqlSessionTemplate.selectOne("common.executeSelectSql", generateQuery(pojoClass, propertyFilters, null));
 			Map<String, Object> params = generateParameterMap(pojoClass);
-			params.put("filters", propertyFilters);
+			params.put(PARAM_NAME_FILTERS, propertyFilters);
 			return sqlSessionTemplate.selectOne(pojoClass.getName() + SQLNAME_SUFFIX_FIND, params);
 		} catch (Exception e) {
 			throw new DatabaseException(e.getMessage());
@@ -149,13 +209,21 @@ public class BaseDAOImpl implements BaseDAO {
 		return find(pojoClass, Arrays.asList(propertyFilters));
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#save(com.lmiky.jdp.database.pojo.BasePojo)
+	 */
 	@Override
 	public <T extends BasePojo> void save(T pojo) throws DatabaseException {
 		if(pojo.getId() == null) {
-			save(pojo);
+			add(pojo);
+		} else {
+			update(pojo);
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#save(java.util.List)
+	 */
 	@Override
 	public <T extends BasePojo> void save(List<T> pojos) throws DatabaseException {
 		for(T pojo: pojos) {
@@ -163,11 +231,17 @@ public class BaseDAOImpl implements BaseDAO {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#add(com.lmiky.jdp.database.pojo.BasePojo)
+	 */
 	@Override
 	public <T extends BasePojo> void add(T pojo) throws DatabaseException {
-		sqlSessionTemplate.insert(pojo.getClass() + SQLNAME_SUFFIX_ADD, pojo);
+		sqlSessionTemplate.insert(pojo.getClass().getName() + SQLNAME_SUFFIX_ADD, pojo);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#add(java.util.List)
+	 */
 	@Override
 	public <T extends BasePojo> void add(List<T> pojos) throws DatabaseException {
 		for(T pojo: pojos) {
@@ -175,47 +249,78 @@ public class BaseDAOImpl implements BaseDAO {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#update(com.lmiky.jdp.database.pojo.BasePojo)
+	 */
 	@Override
 	public <T extends BasePojo> void update(T pojo) throws DatabaseException {
-		// TODO Auto-generated method stub
-
+		sqlSessionTemplate.update(pojo.getClass().getName() + SQLNAME_SUFFIX_UPDATE, pojo);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#update(java.util.List)
+	 */
 	@Override
 	public <T extends BasePojo> void update(List<T> pojos) throws DatabaseException {
-		// TODO Auto-generated method stub
-
+		for(T pojo: pojos) {
+			update(pojo);
+		}
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#update(java.lang.Class, java.lang.Long, java.lang.String, java.lang.Object)
+	 */
 	@Override
 	public <T extends BasePojo> boolean update(Class<T> pojoClass, Long id, String propertyName, Object propertyValue) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return false;
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put(propertyName, propertyValue);
+		return update(pojoClass, id, params);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#update(java.lang.Class, java.lang.Long, java.util.Map)
+	 */
 	@Override
 	public <T extends BasePojo> boolean update(Class<T> pojoClass, Long id, Map<String, Object> params) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return false;
+		Map<String, Object> condition = new HashMap<String, Object>();
+		condition.put(BasePojo.POJO_FIELD_NAME_ID, id);
+		return update(pojoClass, condition, params);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#update(java.lang.Class, java.util.Map, java.util.Map)
+	 */
 	@Override
 	public <T extends BasePojo> boolean update(Class<T> pojoClass, Map<String, Object> condition, Map<String, Object> updateValue) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return false;
+		Map<String, Object> params = generateParameterMap(pojoClass);
+		params.put("condition", condition);
+		params.put("updateValue", updateValue);
+		return sqlSessionTemplate.update(MAPPER_NAMESPACE_COMMON + ".executeUpdate", params) > 0;
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#update(java.lang.Class, java.lang.String, java.lang.Object, java.lang.String, java.lang.Object)
+	 */
 	@Override
 	public <T extends BasePojo> boolean update(Class<T> pojoClass, String conditionFieldName, Object conditionFieldValue, String updateFieldName, Object updateFieldValue) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return false;
+		Map<String, Object> condition = new HashMap<String, Object>();
+		condition.put(conditionFieldName, conditionFieldValue);
+		Map<String, Object> updateValue = new HashMap<String, Object>();
+		condition.put(updateFieldName, updateFieldValue);
+		return update(pojoClass, condition, updateValue);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#delete(com.lmiky.jdp.database.pojo.BasePojo)
+	 */
 	@Override
 	public <T extends BasePojo> void delete(T pojo) throws DatabaseException {
 		delete(pojo.getClass(), pojo.getId());
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#delete(java.util.List)
+	 */
 	@Override
 	public <T extends BasePojo> void delete(List<T> pojos) throws DatabaseException {
 		if(pojos.isEmpty()) {
@@ -228,6 +333,9 @@ public class BaseDAOImpl implements BaseDAO {
 		delete(pojos.get(0).getClass(), ids);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#delete(java.lang.Class, java.lang.Long)
+	 */
 	@Override
 	public <T extends BasePojo> void delete(Class<T> pojoClass, Long id) throws DatabaseException {
 //		SqlBuilder.BEGIN();
@@ -245,14 +353,20 @@ public class BaseDAOImpl implements BaseDAO {
 		delete(pojoClass, propertyFilter);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#delete(java.lang.Class, java.lang.Long[])
+	 */
 	@Override
 	public <T extends BasePojo> void delete(Class<T> pojoClass, Long[] ids) throws DatabaseException {
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("tableName", getPojoTabelName(pojoClass));
 		params.put("ids", ids);
-		sqlSessionTemplate.delete("common.executeBatchDeleteByIds", params);
+		sqlSessionTemplate.delete(MAPPER_NAMESPACE_COMMON + ".executeBatchDeleteByIds", params);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#delete(java.lang.Class, java.lang.String, java.lang.Object)
+	 */
 	@Override
 	public <T extends BasePojo> int delete(Class<T> pojoClass, String propertyName, Object propertyValue) throws DatabaseException {
 		PropertyFilter propertyFilter = new PropertyFilter();
@@ -263,6 +377,9 @@ public class BaseDAOImpl implements BaseDAO {
 		return delete(pojoClass, propertyFilter);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#delete(java.lang.Class, java.util.List)
+	 */
 	@Override
 	public <T extends BasePojo> int delete(Class<T> pojoClass, List<PropertyFilter> propertyFilters) throws DatabaseException {
 //		SqlBuilder.BEGIN();
@@ -282,289 +399,171 @@ public class BaseDAOImpl implements BaseDAO {
 //		params.put("sql", SqlBuilder.SQL());
 //		return sqlSessionTemplate.delete("common.executeDelete", params);
 		Map<String, Object> params = generateParameterMap(pojoClass);
-		params.put("filters", propertyFilters);
-		return sqlSessionTemplate.delete("common.executeDelete", params);
+		params.put(PARAM_NAME_FILTERS, propertyFilters);
+		return sqlSessionTemplate.delete(MAPPER_NAMESPACE_COMMON + ".executeDelete", params);
 	}
 	
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#delete(java.lang.Class, com.lmiky.jdp.database.model.PropertyFilter[])
+	 */
 	@Override
 	public <T extends BasePojo> int delete(Class<T> pojoClass, PropertyFilter... propertyFilters) throws DatabaseException {
 		return delete(pojoClass, Arrays.asList(propertyFilters));
 	}
 
-	public String generateCondition(PropertyFilter filter) {
-		String propertyName = filter.getPropertyName();
-		String compareClassSimpleName = filter.getCompareClass().getSimpleName();
-		if (filter.isCollectionField()) {
-			propertyName = propertyName.substring(propertyName.indexOf(".") + 1);
-		}
-		StringBuffer sqlBuf = new StringBuffer();
-		sqlBuf.append(propertyName);
-		if (filter.getCompareType() == PropertyCompareType.EQ) {
-			sqlBuf.append(" = #{" + compareClassSimpleName + "_" + propertyName + "}");
-		} else if (filter.getCompareType() == PropertyCompareType.NE) {
-			sqlBuf.append(" != #{" + compareClassSimpleName + "_" + propertyName + "}");
-		} else if (filter.getCompareType() == PropertyCompareType.GT) {
-			sqlBuf.append(" > #{" + compareClassSimpleName + "_" + propertyName + "}");
-		} else if (filter.getCompareType() == PropertyCompareType.GE) {
-			sqlBuf.append(" >= #{" + compareClassSimpleName + "_" + propertyName + "}");
-		} else if (filter.getCompareType() == PropertyCompareType.LT) {
-			sqlBuf.append(" < #{" + compareClassSimpleName + "_" + propertyName + "}");
-		} else if (filter.getCompareType() == PropertyCompareType.LE) {
-			sqlBuf.append(" <= #{" + compareClassSimpleName + "_" + propertyName + "}");
-		} else if (filter.getCompareType() == PropertyCompareType.LIKE) {
-			sqlBuf.append(" like '%").append(filter.getPropertyValue()).append("%' ");
-		} else if (filter.getCompareType() == PropertyCompareType.LLIKE) {
-			sqlBuf.append(" like '%").append(filter.getPropertyValue()).append("' ");
-		} else if (filter.getCompareType() == PropertyCompareType.RLIKE) {
-			sqlBuf.append(" like '").append(filter.getPropertyValue()).append("%' ");
-		} else if (filter.getCompareType() == PropertyCompareType.NLIKE) {
-			sqlBuf.append(" not like '%").append(filter.getPropertyValue()).append("%' ");
-		} else if (filter.getCompareType() == PropertyCompareType.NLLIKE) {
-			sqlBuf.append(" not like '%").append(filter.getPropertyValue()).append("' ");
-		} else if (filter.getCompareType() == PropertyCompareType.NRLIKE) {
-			sqlBuf.append(" not like '").append(filter.getPropertyValue()).append("%' ");
-		} else if (filter.getCompareType() == PropertyCompareType.NNULL) {
-			sqlBuf.append(" is not null ");
-		} else if (filter.getCompareType() == PropertyCompareType.NULL) {
-			sqlBuf.append(" is null ");
-		}
-		return sqlBuf.toString();
-	}
-
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#list(java.lang.Class)
+	 */
 	@Override
 	public <T extends BasePojo> List<T> list(Class<T> pojoClass) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return null;
+		return list(pojoClass, 0, Integer.MAX_VALUE);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#list(java.lang.Class, com.lmiky.jdp.database.model.PropertyFilter, com.lmiky.jdp.database.model.Sort)
+	 */
 	@Override
 	public <T extends BasePojo> List<T> list(Class<T> pojoClass, PropertyFilter propertyFilter, Sort sort) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return null;
+		List<PropertyFilter> propertyFilters = new ArrayList<PropertyFilter>();
+		if(propertyFilter != null) {
+			propertyFilters.add(propertyFilter);	
+		}
+		List<Sort> sorts = new ArrayList<Sort>();
+		if(sort != null) {
+			sorts.add(sort);	
+		}
+		return list(pojoClass, propertyFilters, sorts);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#list(java.lang.Class, java.util.List, java.util.List)
+	 */
 	@Override
 	public <T extends BasePojo> List<T> list(Class<T> pojoClass, List<PropertyFilter> propertyFilters, List<Sort> sorts) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return null;
+		return list(pojoClass, propertyFilters, sorts, 0, Integer.MAX_VALUE);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#list(java.lang.Class, com.lmiky.jdp.database.model.PropertyFilter[])
+	 */
 	@Override
 	public <T extends BasePojo> List<T> list(Class<T> pojoClass, PropertyFilter... propertyFilters) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return null;
+		return list(pojoClass, 0, Integer.MAX_VALUE, propertyFilters);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#list(java.lang.Class, com.lmiky.jdp.database.model.Sort[])
+	 */
 	@Override
 	public <T extends BasePojo> List<T> list(Class<T> pojoClass, Sort... sorts) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return null;
+		return list(pojoClass, 0, Integer.MAX_VALUE, sorts);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#list(java.lang.Class, int, int)
+	 */
 	@Override
 	public <T extends BasePojo> List<T> list(Class<T> pojoClass, int pageFirst, int pageSize) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return null;
+		return list(pojoClass, null, null, pageFirst, pageSize);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#list(java.lang.Class, java.util.List, java.util.List, int, int)
+	 */
 	@Override
 	public <T extends BasePojo> List<T> list(Class<T> pojoClass, List<PropertyFilter> propertyFilters, List<Sort> sorts, int pageFirst, int pageSize) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return null;
+		Map<String, Object> params = generateParameterMap(pojoClass);
+		params.put(PARAM_NAME_FILTERS, propertyFilters);
+		params.put(PARAM_NAME_SORTS, sorts);
+		params.put(PARAM_NAME_PAGE_FIRST, pageFirst);
+		params.put(PARAM_NAME_PAGE_SIZE, pageSize);
+		return sqlSessionTemplate.selectList(pojoClass.getName() + SQLNAME_SUFFIX_LIST, params);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#list(java.lang.Class, int, int, com.lmiky.jdp.database.model.PropertyFilter[])
+	 */
 	@Override
 	public <T extends BasePojo> List<T> list(Class<T> pojoClass, int pageFirst, int pageSize, PropertyFilter... propertyFilters) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return null;
+		return list(pojoClass, Arrays.asList(propertyFilters), null, pageFirst, pageSize);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#list(java.lang.Class, int, int, com.lmiky.jdp.database.model.Sort[])
+	 */
 	@Override
 	public <T extends BasePojo> List<T> list(Class<T> pojoClass, int pageFirst, int pageSize, Sort... sorts) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return null;
+		return list(pojoClass, null, Arrays.asList(sorts), pageFirst, pageSize);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#count(java.lang.Class)
+	 */
 	@Override
 	public <T extends BasePojo> int count(Class<T> pojoClass) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return 0;
+		return count(pojoClass, new ArrayList<PropertyFilter>());
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#count(java.lang.Class, java.util.List)
+	 */
 	@Override
 	public <T extends BasePojo> int count(Class<T> pojoClass, List<PropertyFilter> propertyFilters) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return 0;
+		Map<String, Object> params = generateParameterMap(pojoClass);
+		if(propertyFilters != null) {
+			params.put(PARAM_NAME_FILTERS, propertyFilters);
+		}
+		return sqlSessionTemplate.selectOne(MAPPER_NAMESPACE_COMMON + SQLNAME_SUFFIX_COUNT, params);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#count(java.lang.Class, java.lang.String, java.lang.Object)
+	 */
 	@Override
 	public <T extends BasePojo> int count(Class<T> pojoClass, String propertyName, Object propertyValue) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return 0;
+		PropertyFilter propertyFilter = new PropertyFilter();
+		propertyFilter.setCompareClass(pojoClass);
+		propertyFilter.setCompareType(PropertyCompareType.EQ);
+		propertyFilter.setPropertyName(propertyName);
+		propertyFilter.setPropertyValue(propertyValue);
+		return count(pojoClass, propertyFilter);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#count(java.lang.Class, com.lmiky.jdp.database.model.PropertyFilter[])
+	 */
 	@Override
 	public <T extends BasePojo> int count(Class<T> pojoClass, PropertyFilter... propertyFilters) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return 0;
+		return count(pojoClass, Arrays.asList(propertyFilters));
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#exist(java.lang.Class, java.util.List)
+	 */
 	@Override
 	public <T extends BasePojo> boolean exist(Class<T> pojoClass, List<PropertyFilter> propertyFilters) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return false;
+		return count(pojoClass, propertyFilters) > 0;
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#exist(java.lang.Class, com.lmiky.jdp.database.model.PropertyFilter[])
+	 */
 	@Override
 	public <T extends BasePojo> boolean exist(Class<T> pojoClass, PropertyFilter... propertyFilters) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return false;
+		return exist(pojoClass, Arrays.asList(propertyFilters));
 	}
 
+	/* (non-Javadoc)
+	 * @see com.lmiky.jdp.database.dao.BaseDAO#exist(java.lang.Class, java.lang.String, java.lang.Object)
+	 */
 	@Override
 	public <T extends BasePojo> boolean exist(Class<T> pojoClass, String propertyName, Object propertyValue) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	/**
-	 * 生成查询对象
-	 * @author lmiky
-	 * @date 2013-4-16
-	 * @param pojoClass
-	 * @param propertyFilters
-	 * @param sorts
-	 * @return
-	 */
-	protected <T extends BasePojo> Map<String, Object> generateQuery(Class<T> pojoClass, List<PropertyFilter> propertyFilters, List<Sort> sorts) {
-		String sql = generateSql(pojoClass, propertyFilters, sorts);
-		System.out.println(sql);
-		Map<String, Object> query = getFilterValues(propertyFilters);
-		query.put("sql", sql);
-		return query;
-	}
-
-	/**
-	 * 生成HQL
-	 * @author lmiky
-	 * @date 2013-4-16
-	 * @param pojoClass
-	 * @param propertyFilters 过滤条件
-	 * @param sorts 排序
-	 * @return
-	 */
-	protected <T extends BasePojo> String generateSql(Class<T> pojoClass, List<PropertyFilter> propertyFilters, List<Sort> sorts) {
-		String pojoSimpleName = pojoClass.getSimpleName();
-		SqlBuilder.BEGIN();
-		SqlBuilder.SELECT("distinct " + pojoSimpleName + ".*");
-		SqlBuilder.FROM(getPojoTabelName(pojoClass) + " " + pojoSimpleName);
-		if (propertyFilters != null && !propertyFilters.isEmpty()) {
-			List<String> joinClassNames = new ArrayList<String>();
-			for (PropertyFilter propertyFilter : propertyFilters) {
-				if (propertyFilter.isCollectionField()) {
-					String compareClassSimpleName = propertyFilter.getCompareClass().getSimpleName();
-					// 已关联
-					if (joinClassNames.contains(compareClassSimpleName)) {
-						continue;
-					}
-					String comparePropertyName = propertyFilter.getPropertyName().substring(0, propertyFilter.getPropertyName().indexOf("."));
-					SqlBuilder.INNER_JOIN(getPojoTabelName(propertyFilter.getCompareClass()) + " " + compareClassSimpleName + " on " + pojoSimpleName + "." + comparePropertyName + "="
-							+ compareClassSimpleName + "." + BasePojo.POJO_FIELD_NAME_ID);
-					SqlBuilder.WHERE(compareClassSimpleName + "." + comparePropertyName + "=#{" + compareClassSimpleName + "_" + comparePropertyName + "}");
-					joinClassNames.add(compareClassSimpleName);
-				}
-			}
-		}
-		return prepareHql(propertyFilters, sorts);
-	}
-
-	/**
-	 * 设置HQL
-	 * @author lmiky
-	 * @date 2013-4-16
-	 * @param hql
-	 * @param propertyFilters 过滤条件
-	 * @param sorts 排序
-	 * @return
-	 */
-	protected String prepareHql(List<PropertyFilter> propertyFilters, List<Sort> sorts) {
-		if (propertyFilters != null && !propertyFilters.isEmpty()) {
-			for (PropertyFilter filter : propertyFilters) {
-				String propertyName = filter.getPropertyName();
-				String compareClassSimpleName = filter.getCompareClass().getSimpleName();
-				if (filter.isCollectionField()) {
-					propertyName = propertyName.substring(propertyName.indexOf(".") + 1);
-				}
-				StringBuffer sqlBuf = new StringBuffer();
-				sqlBuf.append(filter.getCompareClass().getSimpleName()).append(".").append(propertyName);
-				if (filter.getCompareType() == PropertyCompareType.EQ) {
-					sqlBuf.append(" = #{" + compareClassSimpleName + "_" + propertyName + "}");
-				} else if (filter.getCompareType() == PropertyCompareType.NE) {
-					sqlBuf.append(" != #{" + compareClassSimpleName + "_" + propertyName + "}");
-				} else if (filter.getCompareType() == PropertyCompareType.GT) {
-					sqlBuf.append(" > #{" + compareClassSimpleName + "_" + propertyName + "}");
-				} else if (filter.getCompareType() == PropertyCompareType.GE) {
-					sqlBuf.append(" >= #{" + compareClassSimpleName + "_" + propertyName + "}");
-				} else if (filter.getCompareType() == PropertyCompareType.LT) {
-					sqlBuf.append(" < #{" + compareClassSimpleName + "_" + propertyName + "}");
-				} else if (filter.getCompareType() == PropertyCompareType.LE) {
-					sqlBuf.append(" <= #{" + compareClassSimpleName + "_" + propertyName + "}");
-				} else if (filter.getCompareType() == PropertyCompareType.LIKE) {
-					sqlBuf.append(" like '%").append(filter.getPropertyValue()).append("%' ");
-				} else if (filter.getCompareType() == PropertyCompareType.LLIKE) {
-					sqlBuf.append(" like '%").append(filter.getPropertyValue()).append("' ");
-				} else if (filter.getCompareType() == PropertyCompareType.RLIKE) {
-					sqlBuf.append(" like '").append(filter.getPropertyValue()).append("%' ");
-				} else if (filter.getCompareType() == PropertyCompareType.NLIKE) {
-					sqlBuf.append(" not like '%").append(filter.getPropertyValue()).append("%' ");
-				} else if (filter.getCompareType() == PropertyCompareType.NLLIKE) {
-					sqlBuf.append(" not like '%").append(filter.getPropertyValue()).append("' ");
-				} else if (filter.getCompareType() == PropertyCompareType.NRLIKE) {
-					sqlBuf.append(" not like '").append(filter.getPropertyValue()).append("%' ");
-				} else if (filter.getCompareType() == PropertyCompareType.NNULL) {
-					sqlBuf.append(" is not null ");
-				} else if (filter.getCompareType() == PropertyCompareType.NULL) {
-					sqlBuf.append(" is null ");
-				}
-				SqlBuilder.WHERE(sqlBuf.toString());
-			}
-		}
-
-		if (sorts != null && !sorts.isEmpty()) {
-			for (Sort sort : sorts) {
-				StringBuffer orderBuf = new StringBuffer();
-				orderBuf.append(sort.getSortClass().getSimpleName()).append(".").append(sort.getPropertyName()).append(" ").append(sort.getSortType());
-				SqlBuilder.ORDER_BY(orderBuf.toString());
-			}
-		}
-		return SqlBuilder.SQL();
-	}
-
-	/**
-	 * 获取过滤条件值
-	 * @author lmiky
-	 * @date 2013-4-16
-	 * @param propertyFilters
-	 * @return
-	 */
-	protected Map<String, Object> getFilterValues(List<PropertyFilter> propertyFilters) {
-		Map<String, Object> values = new HashMap<String, Object>();
-		if (propertyFilters != null && !propertyFilters.isEmpty()) {
-			for (PropertyFilter filter : propertyFilters) {
-				// like或null直接在SQL拼写的时候写入
-				if (filter.getPropertyValue() != null && filter.getCompareType() != PropertyCompareType.LIKE && filter.getCompareType() != PropertyCompareType.LLIKE
-						&& filter.getCompareType() != PropertyCompareType.RLIKE && filter.getCompareType() != PropertyCompareType.NLIKE && filter.getCompareType() != PropertyCompareType.NLLIKE
-						&& filter.getCompareType() != PropertyCompareType.NRLIKE && filter.getCompareType() != PropertyCompareType.NNULL && filter.getCompareType() != PropertyCompareType.NULL) {
-					String compareClassSimpleName = filter.getCompareClass().getSimpleName();
-					String comparePropertyName = filter.getPropertyName();
-					if (filter.isCollectionField()) {
-						comparePropertyName = filter.getPropertyName().substring(0, filter.getPropertyName().indexOf("."));
-					}
-					values.put(compareClassSimpleName + "_" + comparePropertyName, filter.getPropertyValue());
-				}
-			}
-		}
-		return values;
+		PropertyFilter propertyFilter = new PropertyFilter();
+		propertyFilter.setCompareClass(pojoClass);
+		propertyFilter.setCompareType(PropertyCompareType.EQ);
+		propertyFilter.setPropertyName(propertyName);
+		propertyFilter.setPropertyValue(propertyValue);
+		return exist(pojoClass, propertyFilter);
 	}
 
 	/**
