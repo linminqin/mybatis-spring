@@ -5,32 +5,27 @@
 <!-- 公共 -->
 <mapper namespace="common">
 
-    <!-- 删除 -->
-    <!-- 
-    <update id="executeUpdate" parameterType="string">
-   		${sql}
-    </update>
-     -->
-     <update id="executeUpdate">
+	<!-- 修改 -->
+    <update id="update">
    		update ${tableName} set
    		<foreach collection="updateValue.keys" item="k" separator=","> 
-	    	<if test="null != updateValue[k]">  
-                    ${k} = #{updateValue[${k}]}
-        	</if>
-		</foreach> 
+		   	<if test="null != updateValue[k]">  
+	             ${k} = #{updateValue[${k}]}
+	       	</if>
+			</foreach> 
 		<if test="null != condition">  
 			<where>
 				<foreach collection="condition.keys" item="k" separator="and"> 
-			    	<if test="null != condition[k]">  
-		                    ${k} = #{condition[${k}]}  
-		        	</if>
+		    		<if test="null != condition[k]">  
+	                	    ${k} = #{condition[${k}]}  
+	        		</if>
 				</foreach> 
 			</where>
 		</if>
     </update>
      
     <!-- 删除 -->
-    <delete id="executeDelete" parameterType="string">
+    <delete id="delete" parameterType="string">
     	delete from ${tableName} 
     	<trim prefix="where">
     		<include refid="common.propertiesCondition"/>
@@ -38,7 +33,7 @@
     </delete>
     
     <!-- 根据ID批量删除 -->
-    <delete id="executeBatchDeleteByIds">
+    <delete id="batchDeleteByIds">
     	delete from ${tableName}
     	<if test="ids != null and ids.length > 0">
     		where id in
