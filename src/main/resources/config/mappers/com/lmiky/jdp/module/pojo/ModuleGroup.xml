@@ -10,7 +10,9 @@
 		<id column="modulegroup_id" property="id"/>
 		<id column="modulegroup_name" property="name"/>
 		<id column="modulegroup_path" property="path"/>
+		<!-- 
 		<collection property="modules" column="id" select="com.lmiky.jdp.module.pojo.Module.findByGroupId"/>
+		 -->
 	</resultMap>
 	<sql id="tableName">
 		t_module_group

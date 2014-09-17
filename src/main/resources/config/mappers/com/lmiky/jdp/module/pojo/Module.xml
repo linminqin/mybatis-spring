@@ -7,9 +7,7 @@
 		<id column="id" property="id"/>
 		<id column="name" property="name"/>
 		<id column="path" property="path"/>
-		<!-- 
 		<association property="group" column="group_id" select="com.lmiky.jdp.module.pojo.ModuleGroup.findById"/>
-		 -->
 		 <!-- 
 		 <association property="group" column="group_id" resultMap="com.lmiky.jdp.module.pojo.ModuleGroup.moduleGroup"/>
 		 -->
