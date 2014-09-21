@@ -18,7 +18,7 @@
 		<property name="maxIdle" value="10" />		<!-- 最小空闲连接数 -->
 		<property name="minIdle" value="10" />
 		
-		<property name="defaultAutoCommit" value="true" />
+		<property name="defaultAutoCommit" value="false" />
     </bean>
 
     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
